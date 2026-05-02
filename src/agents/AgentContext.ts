@@ -1161,11 +1161,17 @@ export class AgentContext {
       return this.graphTools ?? [];
     }
 
-    const schemaTools = createSchemaOnlyTools(
-      this.getActiveToolDefinitions()
-    ) as t.GraphTools;
+    const activeDefs = this.getActiveToolDefinitions();
+    const regularDefs = activeDefs.filter((def) => def.toolType !== 'builtin');
+    const builtinDefs = activeDefs.filter((def) => def.toolType === 'builtin');
 
-    const allTools = [...schemaTools];
+    const schemaTools = createSchemaOnlyTools(regularDefs) as t.GraphTools;
+    /** Builtin tools (e.g. web_search) are passed as {type: name} for the Responses API */
+    const builtinTools = builtinDefs.map((def) => ({
+      type: def.name,
+    })) as unknown as t.GraphTools;
+
+    const allTools = [...builtinTools, ...schemaTools];
 
     if (this.graphTools && this.graphTools.length > 0) {
       allTools.push(...this.graphTools);
