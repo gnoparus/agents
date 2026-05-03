@@ -580,6 +580,11 @@ export class Run<_T extends t.BaseGraphState> {
       })
       .join('\n');
 
+    // Thai characters tokenize at ~1 token/char vs ~4 chars/token for Latin text,
+    // so these char limits are intentionally tight to keep title calls cheap across languages.
+    const titleInput = inputText.slice(0, 300);
+    const titleResponse = response.slice(0, 500);
+
     const model = initializeModel({
       provider,
       clientOptions,
@@ -632,7 +637,7 @@ export class Run<_T extends t.BaseGraphState> {
 
     try {
       return await fullChain.invoke(
-        { input: inputText, output: response },
+        { input: titleInput, output: titleResponse },
         invokeConfig
       );
     } catch (_e) {
@@ -646,7 +651,7 @@ export class Run<_T extends t.BaseGraphState> {
         callbacks: langfuseHandler ? [langfuseHandler] : [],
       });
       return await fullChain.invoke(
-        { input: inputText, output: response },
+        { input: titleInput, output: titleResponse },
         safeConfig as Partial<RunnableConfig>
       );
     }
