@@ -32,7 +32,7 @@ export interface ChatOpenRouterCallOptions
 }
 
 export type ChatOpenRouterInput = Partial<
-  ChatOpenRouterCallOptions & OpenAIChatInput
+  ChatOpenRouterCallOptions & Omit<OpenAIChatInput, 'reasoning'>
 >;
 
 /** invocationParams return type extended with OpenRouter reasoning */
@@ -41,10 +41,6 @@ export type OpenRouterInvocationParams = Omit<
   'messages'
 > & {
   reasoning?: OpenRouterReasoning;
-};
-
-type InvocationParamsExtra = {
-  streaming?: boolean;
 };
 
 interface OpenRouterReasoningTextDetail {
@@ -141,27 +137,21 @@ export class ChatOpenRouter extends ChatOpenAI {
   // effort levels ('xhigh' | 'none' | 'minimal') not in ReasoningEffort.
   // The parent's generic conditional return type cannot be widened in an override.
   override invocationParams(
-    options?: this['ParsedCallOptions'],
-    extra?: InvocationParamsExtra
+    options?: this['ParsedCallOptions']
   ): OpenRouterInvocationParams {
     type MutableParams = Omit<
       OpenAIClient.Chat.ChatCompletionCreateParams,
       'messages'
     > & { reasoning_effort?: string; reasoning?: OpenRouterReasoning };
 
-    const optionsWithDefaults = this._combineCallOptions(options);
-    const params = (
-      this._useResponsesApi(options)
-        ? this.responses.invocationParams(optionsWithDefaults)
-        : this.completions.invocationParams(optionsWithDefaults, extra)
-    ) as MutableParams;
+    const params = super.invocationParams(options) as MutableParams;
 
     // Remove the OpenAI-native reasoning_effort that the parent sets;
     // OpenRouter uses a `reasoning` object instead
     delete params.reasoning_effort;
 
     // Build the OpenRouter reasoning config
-    const reasoning = this.buildOpenRouterReasoning(optionsWithDefaults);
+    const reasoning = this.buildOpenRouterReasoning(options);
     if (reasoning != null) {
       params.reasoning = reasoning;
     } else {

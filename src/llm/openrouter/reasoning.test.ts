@@ -97,12 +97,6 @@ describe('ChatOpenRouter reasoning handling', () => {
       expect(params.reasoning).toBeUndefined();
       expect(params.reasoning_effort).toBeUndefined();
     });
-
-    it('preserves streaming extras from parent invocation params', () => {
-      const router = createRouter({ streamUsage: true });
-      const params = router.invocationParams(undefined, { streaming: true });
-      expect(params.stream_options).toEqual({ include_usage: true });
-    });
   });
 
   // ---------------------------------------------------------------
